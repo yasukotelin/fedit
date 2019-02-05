@@ -6,18 +6,21 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"runtime"
+	"strings"
 
 	"github.com/spf13/cobra"
 )
 
 const (
 	version     = "0.1.0"
-	defEditor   = "vim"
 	tmpFileName = "tmp-file-list.txt"
 )
 
 var (
-	editor string
+	editor      string
+	defEditor   string
+	newLineCode string
 
 	rootCmd = &cobra.Command{
 		Use:   "feditelin",
@@ -28,6 +31,14 @@ var (
 )
 
 func init() {
+	if runtime.GOOS == "windows" {
+		defEditor = "notepad"
+		newLineCode = "\r\n"
+	} else {
+		defEditor = "vim"
+		newLineCode = "\n"
+	}
+
 	rootCmd.Version = version
 
 	// Flag定義
@@ -88,8 +99,10 @@ func createTmpFile(dir string) (tmpFilePath string, err error) {
 		os.Exit(1)
 	}
 
+	file.WriteString(makeTmpFileDescriMsg())
+
 	for _, p := range fileProps {
-		_, err := file.WriteString(p.Name + "\n")
+		_, err := file.WriteString(p.Name + newLineCode)
 		if err != nil {
 			return tmpFileName, err
 		}
@@ -138,4 +151,22 @@ func readFiles(dir string) ([]FileRowProp, error) {
 		}
 	}
 	return res, nil
+}
+
+func makeTmpFileDescriMsg() string {
+	tmpFileDescriMsg := []string{
+		"// リネームしたいファイル名を編集してください。",
+		"// ファイル名の編集が完了したら保存して閉じてください。",
+		"// 編集したファイル名へのリネーム処理が実行されます。",
+		"",
+		"// ファイルのリネーム判定は表示されている既定の行に対して行われます。",
+		"// 改行や行削除などを実施し行をずらした場合には、",
+		"// ファイル名が一様に変更されてしまうため注意してください。",
+		"",
+		"// 編集が完了し閉じた後、",
+		"// 最終確認が表示されるのでキャンセルしたい場合は一度保存して次へ進めてください。",
+		"",
+		"// ----- files ------",
+	}
+	return strings.Join(tmpFileDescriMsg, newLineCode) + newLineCode
 }
