@@ -1,4 +1,4 @@
-package cmd
+package main
 
 import (
 	"fmt"
@@ -71,7 +71,7 @@ func run(cmd *cobra.Command, args []string) {
 }
 
 // Execute root command.
-func Execute() {
+func execute() {
 	if err := rootCmd.Execute(); err != nil {
 		fmt.Println(err)
 		os.Exit(1)
@@ -130,17 +130,17 @@ func getExeDirPath() (string, error) {
 }
 
 // ReadFiles ディレクトリからファイル一覧を返却する
-func readFiles(dir string) ([]FileRowProp, error) {
+func readFiles(dir string) ([]fileRowProp, error) {
 	files, err := ioutil.ReadDir(dir)
 	if err != nil {
 		return nil, err
 	}
 
-	var res []FileRowProp
+	var res []fileRowProp
 	index := 0
 	for _, f := range files {
 		if !f.IsDir() {
-			row := FileRowProp{
+			row := fileRowProp{
 				Index:   index,
 				Path:    filepath.Join(dir, f.Name()),
 				Name:    f.Name(),
