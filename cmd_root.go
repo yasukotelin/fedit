@@ -3,17 +3,21 @@ package main
 import (
 	"fmt"
 	"os"
+	"path/filepath"
+	"runtime"
 
 	"github.com/spf13/cobra"
-	"github.com/yasukotelin/feditelin/tmpfile"
+	"github.com/yasukotelin/feditelin/flistfile"
 )
 
 const (
-	version = "0.1.0"
+	version       = "0.1.0"
+	flistfileName = "flist.txt"
 )
 
 var (
-	argEditor string
+	editor    string
+	defEditor string
 
 	rootCmd = &cobra.Command{
 		Use:   "feditelin",
@@ -26,8 +30,14 @@ var (
 func init() {
 	rootCmd.Version = version
 
+	if runtime.GOOS == "windows" {
+		defEditor = "notepad"
+	} else {
+		defEditor = "vim"
+	}
+
 	// Flag定義
-	rootCmd.PersistentFlags().StringVarP(&argEditor, "editor", "e", "", "specify the editor to open. ")
+	rootCmd.PersistentFlags().StringVarP(&editor, "editor", "e", defEditor, "specify the editor to open. ")
 }
 
 func run(cmd *cobra.Command, args []string) {
@@ -36,21 +46,41 @@ func run(cmd *cobra.Command, args []string) {
 		os.Exit(1)
 	}
 
-	tmpFile := tmpfile.NewTmpFile(args[0])
-	if err := tmpFile.Create(); err != nil {
+	dirPath := args[0]
+	fPath := filepath.Join(dirPath, flistfileName)
+
+	// tmpファイル作成
+	fProps, err := flistfile.Create(dirPath, fPath)
+	if err != nil {
 		fmt.Println(err)
 		os.Exit(1)
 	}
 
-	if err := tmpFile.OpenWithEditor(); err != nil {
-		fmt.Println(err)
-		os.Exit(1)
+	for _, prop := range fProps {
+		fmt.Println(prop.Path)
 	}
 
-	if err := tmpFile.Delete(); err != nil {
-		fmt.Println(err)
-		os.Exit(1)
-	}
+	// エディタでtmpファイルを開く
+	// if err := tmpFile.OpenWithEditor(); err != nil {
+	// 	fmt.Println(err)
+	// 	os.Exit(1)
+	// }
+
+	// 編集後のtmpファイルを開く
+	// tmpFile2 := tmpfile.NewTmpFile(dirPath)
+	// s, err := tmpFile2.OpenRead()
+	// if err != nil {
+	// 	fmt.Println(err)
+	// 	os.Exit(1)
+	// }
+	// fmt.Println(s)
+
+	// tmpファイル削除
+
+	// if err := tmpFile.Delete(); err != nil {
+	// 	fmt.Println(err)
+	// 	os.Exit(1)
+	// }
 }
 
 func execute() {
