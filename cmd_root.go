@@ -51,14 +51,10 @@ func run(cmd *cobra.Command, args []string) {
 	fPath := filepath.Join(dirPath, flistfileName)
 
 	// tmpファイル作成
-	fProps, err := flistfile.Create(dirPath, fPath)
+	_, err := flistfile.Create(dirPath, fPath)
 	if err != nil {
 		fmt.Println(err)
 		os.Exit(1)
-	}
-
-	for _, prop := range fProps {
-		fmt.Println(prop.Path)
 	}
 
 	// エディタでtmpファイルを開く
@@ -68,8 +64,16 @@ func run(cmd *cobra.Command, args []string) {
 		os.Exit(1)
 	}
 
-	// tmpファイルを開いて読み込む
-	flistfile.OpenRead(fPath)
+	// 編集後のtmpファイルを開いて読み込む
+	props2, err := flistfile.OpenRead(fPath)
+	if err != nil {
+		fmt.Println(err)
+		os.Exit(1)
+	}
+
+	for _, p := range props2 {
+		fmt.Println(p.Path)
+	}
 
 	// tmpファイル削除
 	if err := os.Remove(fPath); err != nil {
