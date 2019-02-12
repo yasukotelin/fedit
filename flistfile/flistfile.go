@@ -1,16 +1,13 @@
 package flistfile
 
 import (
+	"fmt"
 	"io/ioutil"
 	"os"
 	"path/filepath"
 	"runtime"
 	"strings"
 )
-
-// const (
-// 	fname = "fed-tmp.txt"
-// )
 
 var (
 	descriMsg = []string{
@@ -28,15 +25,6 @@ var (
 		"// ----- files ------",
 	}
 )
-
-// // TmpFile struct
-// type TmpFile struct {
-// 	Dir         string
-// 	Name        string
-// 	Rows        []FileRowProp
-// 	NewLineCode string
-// 	Editor      string
-// }
 
 // FileRowProp tmpファイル1行の情報を保持する構造体
 type FileRowProp struct {
@@ -87,58 +75,6 @@ func Create(dir string, path string) ([]FileRowProp, error) {
 	return rows, nil
 }
 
-// NewTmpFile create TmpFile instance
-// func NewTmpFile(dir string) *TmpFile {
-// 	var newLineCode string
-// 	var editor string
-// 	if runtime.GOOS == "windows" {
-// 		editor = "notepad"
-// 		newLineCode = "\r\n"
-// 	} else {
-// 		editor = "vim"
-// 		newLineCode = "\n"
-// 	}
-
-// 	return &TmpFile{
-// 		Dir:         dir,
-// 		Name:        name,
-// 		Rows:        nil,
-// 		NewLineCode: newLineCode,
-// 		Editor:      editor,
-// 	}
-// }
-
-// func (t *TmpFile) getPath() string {
-// 	return filepath.Join(t.Dir, t.Name)
-// }
-
-// func (t *TmpFile) Create() error {
-// 	file, err := os.Create(t.getPath())
-// 	if err != nil {
-// 		return err
-// 	}
-// 	defer file.Close()
-
-// 	// 引数Directoryからファイル一覧読み込み
-// 	t.Rows, err = readFiles(t.Dir)
-// 	if err != nil {
-// 		return err
-// 	}
-
-// 	// ファイル説明文の書き込み
-// 	file.WriteString(strings.Join(descriMsg, t.NewLineCode) + t.NewLineCode)
-
-// 	// ファイル一覧の書き込み
-// 	for _, p := range t.Rows {
-// 		_, err := file.WriteString(p.Name + t.NewLineCode)
-// 		if err != nil {
-// 			return err
-// 		}
-// 	}
-
-// 	return nil
-// }
-
 // readFiles ディレクトリからファイル一覧を返却する
 func readFileRowProps(dir string) ([]FileRowProp, error) {
 	files, err := ioutil.ReadDir(dir)
@@ -161,35 +97,24 @@ func readFileRowProps(dir string) ([]FileRowProp, error) {
 	return res, nil
 }
 
-// func (t *TmpFile) OpenWithEditor() error {
-// 	execCmd := exec.Command(t.Editor, t.getPath())
-// 	if err := execCmd.Run(); err != nil {
-// 		return err
-// 	}
-// 	return nil
-// }
+func OpenRead(path string) ([]FileRowProp, error) {
+	var props []FileRowProp
 
-// func (t *TmpFile) Delete() error {
-// 	return os.Remove(t.getPath())
-// }
+	f, err := os.Open(path)
+	if err != nil {
+		return props, err
+	}
 
-// TODO implements
-// func Diff(f1 *TmpFile, f2 *TmpFile) ([]FileRowDiff, error) {
-// 	var diffs []FileRowDiff
-// 	return diffs, nil
-// }
+	b, err := ioutil.ReadAll(f)
+	if err != nil {
+		return props, err
+	}
 
-// TODO implements
-// func (t *TmpFile) OpenRead() (string, error) {
-// 	f, err := os.Open(t.getPath())
-// 	if err != nil {
-// 		return "", err
-// 	}
+	rows := strings.Split(string(b), getNewLineCode())
 
-// 	b, err := ioutil.ReadAll(f)
-// 	if err != nil {
-// 		return "", err
-// 	}
+	for _, r := range rows {
+		fmt.Println(r)
+	}
 
-// 	return string(b), nil
-// }
+	return props, nil
+}

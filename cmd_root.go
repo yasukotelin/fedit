@@ -68,14 +68,8 @@ func run(cmd *cobra.Command, args []string) {
 		os.Exit(1)
 	}
 
-	// 編集後のtmpファイルを開く
-	// tmpFile2 := tmpfile.NewTmpFile(dirPath)
-	// s, err := tmpFile2.OpenRead()
-	// if err != nil {
-	// 	fmt.Println(err)
-	// 	os.Exit(1)
-	// }
-	// fmt.Println(s)
+	// tmpファイルを開いて読み込む
+	flistfile.OpenRead(fPath)
 
 	// tmpファイル削除
 	if err := os.Remove(fPath); err != nil {
