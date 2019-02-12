@@ -1,5 +1,7 @@
 package main
 
+import "github.com/yasukotelin/feditelin/cmd"
+
 func main() {
-	execute()
+	cmd.Execute()
 }

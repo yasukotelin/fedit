@@ -1,4 +1,4 @@
-package main
+package cmd
 
 import (
 	"fmt"
@@ -65,14 +65,10 @@ func run(cmd *cobra.Command, args []string) {
 	}
 
 	// 編集後のtmpファイルを開いて読み込む
-	props2, err := flistfile.OpenRead(fPath)
+	_, err = flistfile.OpenRead(fPath)
 	if err != nil {
 		fmt.Println(err)
 		os.Exit(1)
-	}
-
-	for _, p := range props2 {
-		fmt.Println(p.Path)
 	}
 
 	// tmpファイル削除
@@ -82,7 +78,7 @@ func run(cmd *cobra.Command, args []string) {
 	}
 }
 
-func execute() {
+func Execute() {
 	if err := rootCmd.Execute(); err != nil {
 		fmt.Println(err)
 		os.Exit(1)
