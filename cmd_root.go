@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"runtime"
 
@@ -61,10 +62,11 @@ func run(cmd *cobra.Command, args []string) {
 	}
 
 	// エディタでtmpファイルを開く
-	// if err := tmpFile.OpenWithEditor(); err != nil {
-	// 	fmt.Println(err)
-	// 	os.Exit(1)
-	// }
+	execCmd := exec.Command(editor, fPath)
+	if err := execCmd.Run(); err != nil {
+		fmt.Println(err)
+		os.Exit(1)
+	}
 
 	// 編集後のtmpファイルを開く
 	// tmpFile2 := tmpfile.NewTmpFile(dirPath)
@@ -76,11 +78,10 @@ func run(cmd *cobra.Command, args []string) {
 	// fmt.Println(s)
 
 	// tmpファイル削除
-
-	// if err := tmpFile.Delete(); err != nil {
-	// 	fmt.Println(err)
-	// 	os.Exit(1)
-	// }
+	if err := os.Remove(fPath); err != nil {
+		fmt.Println(err)
+		os.Exit(1)
+	}
 }
 
 func execute() {
