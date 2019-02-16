@@ -76,6 +76,7 @@ func readFileRowProps(dir string) ([]FileRowProp, error) {
 	return res, nil
 }
 
+// OpenRead はflistファイルを読み込みProperty情報を返却する
 func OpenRead(path string) ([]FileRowProp, error) {
 	var props []FileRowProp
 	dir := filepath.Dir(path)
@@ -101,4 +102,18 @@ func OpenRead(path string) ([]FileRowProp, error) {
 	}
 
 	return props, nil
+}
+
+// Diff はf1とf2の差分を返却する
+func Diff(f1 []FileRowProp, f2 []FileRowProp) []FileRowDiff {
+	var diffs []FileRowDiff
+	for i := range f1 {
+		if f1[i].Name != f2[i].Name {
+			diffs = append(diffs, FileRowDiff{
+				File1: f1[i],
+				File2: f2[i],
+			})
+		}
+	}
+	return diffs
 }
