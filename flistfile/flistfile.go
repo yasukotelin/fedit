@@ -3,10 +3,23 @@ package flistfile
 import (
 	"io/ioutil"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"runtime"
 	"strings"
 )
+
+const (
+	flistfileName = "flist.txt"
+)
+
+// FListFile 構造体
+type FListFile struct {
+	// Dir 走査対象ディレクトリ
+	Dir string
+	// flistファイルの出力先パス
+	OutPath string
+}
 
 // FileRowProp tmpファイル1行の情報を保持する構造体
 type FileRowProp struct {
@@ -14,10 +27,18 @@ type FileRowProp struct {
 	Name string
 }
 
-// FileRowDiff ファイル行の差分用構造体
-type FileRowDiff struct {
-	File1 FileRowProp
-	File2 FileRowProp
+// NewFListFile はFListFileのコンストラクタ
+func NewFListFile(dir string) (*FListFile, error) {
+	ep, err := os.Executable()
+	if err != nil {
+		return nil, err
+	}
+	fp := filepath.Join(filepath.Dir(ep), flistfileName)
+
+	return &FListFile{
+		Dir:     dir,
+		OutPath: fp,
+	}, nil
 }
 
 func getNewLineCode() string {
@@ -27,17 +48,17 @@ func getNewLineCode() string {
 	return "\n"
 }
 
-// Create 指定dirパスにあるファイル一覧を書き込んだファイルをpathに作成する
-// 返り値に読み込んだファイル一覧情報を返却する
-func Create(dir string, path string) ([]FileRowProp, error) {
-	file, err := os.OpenFile(path, os.O_CREATE, 0666)
+// Create flistファイルを作成する。
+// 返り値に走査対象のディレクトリにあるファイル一覧情報を返却する
+func (f *FListFile) Create() ([]FileRowProp, error) {
+	file, err := os.OpenFile(f.OutPath, os.O_CREATE, 0666)
 	if err != nil {
 		return nil, err
 	}
 	defer file.Close()
 
 	// 引数Directoryからファイル一覧読み込み
-	rows, err := readFileRowProps(dir)
+	rows, err := readFileRowProps(f.Dir)
 	if err != nil {
 		return nil, err
 	}
@@ -76,18 +97,23 @@ func readFileRowProps(dir string) ([]FileRowProp, error) {
 	return res, nil
 }
 
-// OpenRead はflistファイルを読み込みProperty情報を返却する
-func OpenRead(path string) ([]FileRowProp, error) {
-	var props []FileRowProp
-	dir := filepath.Dir(path)
+// OpenWithEditor flistファイルを指定エディタで開く
+func (f *FListFile) OpenWithEditor(name string) error {
+	execCmd := exec.Command(name, f.OutPath)
+	return execCmd.Run()
+}
 
-	f, err := os.Open(path)
+// OpenRead はflistファイルを読み込みProperty情報を返却する
+func (f *FListFile) OpenRead() ([]FileRowProp, error) {
+	var props []FileRowProp
+
+	file, err := os.Open(f.OutPath)
 	if err != nil {
 		return props, err
 	}
-	defer f.Close()
+	defer file.Close()
 
-	b, err := ioutil.ReadAll(f)
+	b, err := ioutil.ReadAll(file)
 	if err != nil {
 		return props, err
 	}
@@ -96,7 +122,7 @@ func OpenRead(path string) ([]FileRowProp, error) {
 
 	for _, r := range rows {
 		props = append(props, FileRowProp{
-			Path: filepath.Join(dir, r),
+			Path: filepath.Join(f.Dir, r),
 			Name: r,
 		})
 	}
@@ -104,16 +130,7 @@ func OpenRead(path string) ([]FileRowProp, error) {
 	return props, nil
 }
 
-// Diff はf1とf2の差分を返却する
-func Diff(f1 []FileRowProp, f2 []FileRowProp) []FileRowDiff {
-	var diffs []FileRowDiff
-	for i := range f1 {
-		if f1[i].Name != f2[i].Name {
-			diffs = append(diffs, FileRowDiff{
-				File1: f1[i],
-				File2: f2[i],
-			})
-		}
-	}
-	return diffs
+// Remove flistファイルを削除する
+func (f *FListFile) Remove() error {
+	return os.Remove(f.OutPath)
 }

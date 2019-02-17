@@ -3,8 +3,6 @@ package cmd
 import (
 	"fmt"
 	"os"
-	"os/exec"
-	"path/filepath"
 	"runtime"
 
 	"github.com/spf13/cobra"
@@ -12,8 +10,7 @@ import (
 )
 
 const (
-	version       = "0.1.0"
-	flistfileName = "flist.txt"
+	version = "0.1.0"
 )
 
 var (
@@ -43,32 +40,31 @@ func init() {
 
 func run(cmd *cobra.Command, args []string) {
 	if len(args) == 0 {
-		fmt.Println("directry path required")
-		os.Exit(1)
+		exitErrorS("directry path required")
 	}
 
 	dirPath := args[0]
-	fPath := filepath.Join(dirPath, flistfileName)
+
+	flFile, err := flistfile.NewFListFile(dirPath)
+	if err != nil {
+		exitError(err)
+	}
 
 	// tmpファイル作成
-	f1, err := flistfile.Create(dirPath, fPath)
+	f1, err := flFile.Create()
 	if err != nil {
-		fmt.Println(err)
-		os.Exit(1)
+		exitError(err)
 	}
 
 	// エディタでtmpファイルを開く
-	execCmd := exec.Command(editor, fPath)
-	if err := execCmd.Run(); err != nil {
-		fmt.Println(err)
-		os.Exit(1)
+	if err := flFile.OpenWithEditor(editor); err != nil {
+		exitError(err)
 	}
 
 	// 編集後のtmpファイルを開いて読み込む
-	f2, err := flistfile.OpenRead(fPath)
+	f2, err := flFile.OpenRead()
 	if err != nil {
-		fmt.Println(err)
-		os.Exit(1)
+		exitError(err)
 	}
 
 	// 差分取得
@@ -78,31 +74,28 @@ func run(cmd *cobra.Command, args []string) {
 		// 差分表示
 		fmt.Println()
 		for _, d := range diffs {
-			fmt.Printf("%s ---> %s\n", d.File1.Name, d.File2.Name)
+			fmt.Printf("%s ---> %s\n", d.File1.Path, d.File2.Path)
 		}
 		fmt.Println()
 
 		// 確定確認
 		r, err := askToApplyRename()
 		if err != nil {
-			fmt.Println(err)
-			os.Exit(1)
+			exitError(err)
 		}
 		if r {
 			// Rename処理
 			for _, d := range diffs {
 				if err := os.Rename(d.File1.Path, d.File2.Path); err != nil {
-					fmt.Println(err)
-					os.Exit(1)
+					exitError(err)
 				}
 			}
 		}
 	}
 
 	// tmpファイル削除
-	if err := os.Remove(fPath); err != nil {
-		fmt.Println(err)
-		os.Exit(1)
+	if err := flFile.Remove(); err != nil {
+		exitError(err)
 	}
 }
 
@@ -128,4 +121,14 @@ func Execute() {
 		fmt.Println(err)
 		os.Exit(1)
 	}
+}
+
+func exitError(e error) {
+	fmt.Println(e)
+	os.Exit(1)
+}
+
+func exitErrorS(s string) {
+	fmt.Println(s)
+	os.Exit(1)
 }
