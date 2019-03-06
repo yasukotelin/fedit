@@ -1,6 +1,7 @@
 package cmd
 
 import (
+	"errors"
 	"fmt"
 	"os"
 	"runtime"
@@ -45,7 +46,7 @@ func run(cmd *cobra.Command, args []string) {
 
 	dirPath := args[0]
 
-	flFile, err := flistfile.NewFListFile(dirPath)
+	flFile, err := flistfile.NewFlistfile(dirPath)
 	if err != nil {
 		exitError(err)
 	}
@@ -65,6 +66,11 @@ func run(cmd *cobra.Command, args []string) {
 	f2, err := flFile.OpenRead()
 	if err != nil {
 		exitError(err)
+	}
+
+	// リネーム名に重複がないかのチェック
+	if flistfile.IsDupl(&f2) {
+		exitError(errors.New("Duplicate file path specified"))
 	}
 
 	// 差分取得
