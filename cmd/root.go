@@ -7,11 +7,11 @@ import (
 	"runtime"
 
 	"github.com/spf13/cobra"
-	"github.com/yasukotelin/feditelin/flistfile"
+	"github.com/yasukotelin/fedit/flistfile"
 )
 
 const (
-	version = "0.1.0"
+	version = "1.1.0"
 )
 
 var (
@@ -19,9 +19,9 @@ var (
 	defEditor string
 
 	rootCmd = &cobra.Command{
-		Use:   "feditelin",
+		Use:   "fedit",
 		Short: "rename all files in derectory.",
-		Long:  "feditelin is the tool to rename all files in directory",
+		Long:  "fedit is the tool to rename all files in directory",
 		Run:   run,
 	}
 )

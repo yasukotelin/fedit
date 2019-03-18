@@ -1,23 +1,22 @@
-# feditelin
-File edit telin - ☆
+# fedit
 
-ディレクトリ内のファイルを一気にリネームできるツールです。
-お好みのエディタでファイル一覧を開いて編集できます。
+fedit command renames files in the all them of directory. 
+And you can edit with favorite editor, for example vim, emacs, notepad and gedit.
 
-ファイラーでぽちぽちリネームするのが面倒なときにどうぞ。
+If you takes time with rename tasks, recommend this.
 
 ![preview](./image/feditelin-prev1.gif)
 
 ## Install
 
 ```
-go get github.com/yasukotelin/feditelin
+go get github.com/yasukotelin/fedit
 ```
 
 ## How to use
 
 ```
-$ feditelin --help
+$ fedit --help
 feditelin is the tool to rename all files in directory
 
 Usage:
@@ -31,19 +30,12 @@ Flags:
 
 ```
 
-引数にディレクトリを指定することで、そのディレクトリ直下のファイル一覧情報がエディタで開かれます。そのままリネームして保存、閉じるとリネーム実行の再確認が表示されるので、y or nで確定してください。
+### Specify editor
 
-### エディタ指定
-
-`-e` オプションで展開するエディタを指定できます。
+You can specify the favorite editor with `-e` option.
 
 ```
-feditelin -e gvim ./
+fedit -e gvim ./
 ```
 
-また、デフォルトのエディタは、Windowsの場合メモ帳、それ以外の場合はvimに指定されています。
-
-## Develop dependencies
-
-* Go
-* dep
+> **NOTE** Default editor is notepad when uses on the windows, and it's vim when on the other os.

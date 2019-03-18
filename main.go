@@ -1,6 +1,6 @@
 package main
 
-import "github.com/yasukotelin/feditelin/cmd"
+import "github.com/yasukotelin/fedit/cmd"
 
 func main() {
 	cmd.Execute()
