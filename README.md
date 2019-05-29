@@ -6,7 +6,7 @@ And you can edit with favorite editor, for example vim, emacs, notepad and gedit
 If you takes time with rename tasks, recommend this.
 
 <p align="center">
-    <img src="./image/fedit-sample.gif" width="200px">
+    <img src="./image/fedit-sample.gif" width="auto">
 </p>
 
 ## Install
