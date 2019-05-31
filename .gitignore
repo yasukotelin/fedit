@@ -56,4 +56,8 @@ $RECYCLE.BIN/
 # Windows shortcuts
 *.lnk
 
+# fedit
+flit.txt
+
 # End of https://www.gitignore.io/api/go,windows,visualstudiocode
+
