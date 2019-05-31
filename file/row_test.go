@@ -1,4 +1,4 @@
-package flistfile
+package file
 
 import "testing"
 
@@ -6,7 +6,7 @@ func TestIsDupl(t *testing.T) {
 	// 重複していない
 	rows := []Row{
 		Row{Path: "./diff.go"},
-		Row{Path: "./row.go"},
+		Row{Path: "./Row.go"},
 		Row{Path: "./flistfile.go"},
 	}
 
@@ -20,7 +20,7 @@ func TestIsDupl(t *testing.T) {
 	// 重複している
 	rows = []Row{
 		Row{Path: "./diff.go"},
-		Row{Path: "./row.go"},
+		Row{Path: "./Row.go"},
 		Row{Path: "./flistfile.go"},
 		Row{Path: "./diff.go"},
 	}

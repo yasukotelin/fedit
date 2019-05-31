@@ -1,4 +1,4 @@
-package flistfile
+package file
 
 // Row is struct that has infomation for one line of tmp file
 type Row struct {

@@ -1,7 +1,18 @@
 package main
 
-import "github.com/yasukotelin/fedit/cmd"
+import (
+	"fmt"
+	"os"
+)
+
+const (
+	version     = "1.1.3"
+	tmpFileName = "files.tmp"
+)
 
 func main() {
-	cmd.Execute()
+	if err := rootCmd.Execute(); err != nil {
+		fmt.Println(err)
+		os.Exit(1)
+	}
 }

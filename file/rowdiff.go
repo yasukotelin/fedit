@@ -1,6 +1,6 @@
-package flistfile
+package file
 
-// RowDiff ファイル行の差分用構造体
+// RowDiff is struct for difference file row
 type RowDiff struct {
 	File1 Row
 	File2 Row

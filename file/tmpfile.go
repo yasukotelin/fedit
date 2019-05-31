@@ -1,50 +1,41 @@
-package flistfile
+package file
 
 import (
 	"io/ioutil"
 	"os"
 	"os/exec"
 	"path/filepath"
-	"runtime"
 	"strings"
 )
 
-const (
-	FlistfileName = "flist.txt"
-)
-
-// Flistfile 構造体
-type Flistfile struct {
-	// Dir 走査対象ディレクトリ
+// TmpFile is temporary file used for editing it and confirming diff.
+type TmpFile struct {
+	// Name is tmporary file name
+	Name string
+	// Dir is target directory to search files.
 	Dir string
-	// flistファイルの出力先パス
+	// OutPath is path where this is output
 	OutPath string
 }
 
-// NewFlistfile はFlistfileのコンストラクタ
-func NewFlistfile(dir string) (*Flistfile, error) {
-	ep, err := os.Executable()
+// NewTmpFile returns created struct pointer
+func NewTmpFile(name string, dir string) (*TmpFile, error) {
+	exePath, err := os.Executable()
 	if err != nil {
 		return nil, err
 	}
-	fp := filepath.Join(filepath.Dir(ep), FlistfileName)
+	outPath := filepath.Join(filepath.Dir(exePath), name)
 
-	return &Flistfile{
+	return &TmpFile{
+		Name:    name,
 		Dir:     dir,
-		OutPath: fp,
+		OutPath: outPath,
 	}, nil
-}
-
-func getNewLineCode() string {
-	if runtime.GOOS == "windows" {
-		return "\r\n"
-	}
-	return "\n"
 }
 
 // Create flistファイルを作成する。
 // 返り値に走査対象のディレクトリにあるファイル一覧情報を返却する
-func (f *Flistfile) Create() ([]Row, error) {
+func (f *TmpFile) Create() ([]Row, error) {
 	file, err := os.OpenFile(f.OutPath, os.O_CREATE, 0666)
 	if err != nil {
 		return nil, err
@@ -92,13 +83,13 @@ func readRows(dir string) ([]Row, error) {
 }
 
 // OpenWithEditor flistファイルを指定エディタで開く
-func (f *Flistfile) OpenWithEditor(name string) error {
+func (f *TmpFile) OpenWithEditor(name string) error {
 	execCmd := exec.Command(name, f.OutPath)
 	return execCmd.Run()
 }
 
 // OpenRead はflistファイルを読み込みProperty情報を返却する
-func (f *Flistfile) OpenRead() ([]Row, error) {
+func (f *TmpFile) OpenRead() ([]Row, error) {
 	var props []Row
 
 	file, err := os.Open(f.OutPath)
@@ -125,6 +116,6 @@ func (f *Flistfile) OpenRead() ([]Row, error) {
 }
 
 // Remove flistファイルを削除する
-func (f *Flistfile) Remove() error {
+func (f *TmpFile) Remove() error {
 	return os.Remove(f.OutPath)
 }

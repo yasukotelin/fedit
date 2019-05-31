@@ -1,22 +1,17 @@
-package cmd
+package main
 
 import (
 	"errors"
 	"fmt"
 	"os"
-	"runtime"
 
 	"github.com/spf13/cobra"
-	"github.com/yasukotelin/fedit/flistfile"
-)
-
-const (
-	version = "1.1.3"
+	"github.com/yasukotelin/fedit/editor"
+	"github.com/yasukotelin/fedit/file"
 )
 
 var (
-	editor    string
-	defEditor string
+	specifiedEditor string
 
 	rootCmd = &cobra.Command{
 		Use:   "fedit",
@@ -28,25 +23,23 @@ var (
 
 func init() {
 	rootCmd.Version = version
+	rootCmd.PersistentFlags().StringVarP(&specifiedEditor, "editor", "e", editor.GetDefaultEditor(), "specify the editor to open. ")
+}
 
-	if runtime.GOOS == "windows" {
-		defEditor = "notepad"
-	} else {
-		defEditor = "vim"
-	}
+func exitError(e error) {
+	fmt.Println(e)
+	os.Exit(1)
+}
 
-	// Flag定義
-	rootCmd.PersistentFlags().StringVarP(&editor, "editor", "e", defEditor, "specify the editor to open. ")
+func exitErrorS(s string) {
+	fmt.Println(s)
+	os.Exit(1)
 }
 
 func run(cmd *cobra.Command, args []string) {
-	if len(args) == 0 {
-		exitErrorS("directry path required")
-	}
+	dirPath := getDirPath(args)
 
-	dirPath := args[0]
-
-	flFile, err := flistfile.NewFlistfile(dirPath)
+	flFile, err := file.NewTmpFile(tmpFileName, dirPath)
 	if err != nil {
 		exitError(err)
 	}
@@ -58,7 +51,7 @@ func run(cmd *cobra.Command, args []string) {
 	}
 
 	// エディタでtmpファイルを開く
-	if err := flFile.OpenWithEditor(editor); err != nil {
+	if err := flFile.OpenWithEditor(specifiedEditor); err != nil {
 		exitError(err)
 	}
 
@@ -69,12 +62,12 @@ func run(cmd *cobra.Command, args []string) {
 	}
 
 	// リネーム名に重複がないかのチェック
-	if flistfile.IsDupl(&f2) {
+	if file.IsDupl(&f2) {
 		exitError(errors.New("Duplicate file path specified"))
 	}
 
 	// 差分取得
-	diffs := flistfile.Diff(f1, f2)
+	diffs := file.Diff(f1, f2)
 
 	if len(diffs) > 0 {
 		// 差分表示
@@ -105,6 +98,13 @@ func run(cmd *cobra.Command, args []string) {
 	}
 }
 
+func getDirPath(args []string) string {
+	if len(args) == 0 {
+		exitErrorS("directry path required")
+	}
+	return args[0]
+}
+
 func askToApplyRename() (bool, error) {
 	var s string
 	for {
@@ -120,21 +120,4 @@ func askToApplyRename() (bool, error) {
 			return false, nil
 		}
 	}
-}
-
-func Execute() {
-	if err := rootCmd.Execute(); err != nil {
-		fmt.Println(err)
-		os.Exit(1)
-	}
-}
-
-func exitError(e error) {
-	fmt.Println(e)
-	os.Exit(1)
-}
-
-func exitErrorS(s string) {
-	fmt.Println(s)
-	os.Exit(1)
 }
