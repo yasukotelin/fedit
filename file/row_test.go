@@ -10,7 +10,7 @@ func TestIsDupl(t *testing.T) {
 		Row{Path: "./flistfile.go"},
 	}
 
-	act := IsDupl(&rows)
+	act := IsDupl(rows)
 	exec := false
 
 	if act != exec {
@@ -25,7 +25,7 @@ func TestIsDupl(t *testing.T) {
 		Row{Path: "./diff.go"},
 	}
 
-	act = IsDupl(&rows)
+	act = IsDupl(rows)
 	exec = true
 
 	if act != exec {

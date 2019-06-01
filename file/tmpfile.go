@@ -1,25 +1,30 @@
 package file
 
 import (
+	"bufio"
+	"fmt"
 	"io/ioutil"
 	"os"
 	"os/exec"
 	"path/filepath"
-	"strings"
 )
 
 // TmpFile is temporary file used for editing it and confirming diff.
 type TmpFile struct {
 	// Name is tmporary file name
 	Name string
-	// Dir is target directory to search files.
-	Dir string
+	// TargetDir is target directory to search files.
+	TargetDir string
 	// OutPath is path where this is output
 	OutPath string
+	// Rows is file rows
+	Rows []Row
+	// PrevRows is row before edited (previous rows).
+	PrevRows []Row
 }
 
 // NewTmpFile returns created struct pointer
-func NewTmpFile(name string, dir string) (*TmpFile, error) {
+func NewTmpFile(name string, targetDir string) (*TmpFile, error) {
 	exePath, err := os.Executable()
 	if err != nil {
 		return nil, err
@@ -27,53 +32,51 @@ func NewTmpFile(name string, dir string) (*TmpFile, error) {
 	outPath := filepath.Join(filepath.Dir(exePath), name)
 
 	return &TmpFile{
-		Name:    name,
-		Dir:     dir,
-		OutPath: outPath,
+		Name:      name,
+		OutPath:   outPath,
+		TargetDir: targetDir,
 	}, nil
 }
 
-// Create flistファイルを作成する。
-// 返り値に走査対象のディレクトリにあるファイル一覧情報を返却する
-func (f *TmpFile) Create() ([]Row, error) {
+// Create the temp file.
+// return the value that has file list information on the search target.
+func (f *TmpFile) Create() error {
 	file, err := os.OpenFile(f.OutPath, os.O_CREATE, 0666)
 	if err != nil {
-		return nil, err
+		return err
 	}
 	defer file.Close()
 
-	// 引数Directoryからファイル一覧読み込み
-	rows, err := readRows(f.Dir)
+	f.Rows, err = f.readRows()
 	if err != nil {
-		return nil, err
+		return err
 	}
 
 	nlc := getNewLineCode()
 
-	// ファイル一覧の書き込み
-	for _, p := range rows {
+	for _, p := range f.Rows {
 		_, err := file.WriteString(p.Name + nlc)
 		if err != nil {
-			return nil, err
+			return err
 		}
 	}
-	return rows, nil
+	return nil
 }
 
-// readFiles ディレクトリからファイル一覧を返却する
-func readRows(dir string) ([]Row, error) {
-	files, err := ioutil.ReadDir(dir)
+// readRows reads the file list in the direcotory.
+func (f TmpFile) readRows() ([]Row, error) {
+	files, err := ioutil.ReadDir(f.TargetDir)
 	if err != nil {
 		return nil, err
 	}
 
 	var res []Row
 	index := 0
-	for _, f := range files {
-		if !f.IsDir() {
+	for _, file := range files {
+		if !file.IsDir() {
 			row := Row{
-				Path: filepath.Join(dir, f.Name()),
-				Name: f.Name(),
+				Path: filepath.Join(f.TargetDir, file.Name()),
+				Name: file.Name(),
 			}
 			res = append(res, row)
 			index++
@@ -82,14 +85,25 @@ func readRows(dir string) ([]Row, error) {
 	return res, nil
 }
 
-// OpenWithEditor flistファイルを指定エディタで開く
-func (f *TmpFile) OpenWithEditor(name string) error {
-	execCmd := exec.Command(name, f.OutPath)
-	return execCmd.Run()
+// OpenWithEditor opens the this temporary file with editor of specified name.
+// After edited it, *TmpFile#Rows is to be edited new rows
+// and *TmpFile#PrevRows is to be previous rows.
+func (f *TmpFile) OpenWithEditor(editor string) error {
+	execCmd := exec.Command(editor, f.OutPath)
+	err := execCmd.Run()
+	if err != nil {
+		return err
+	}
+	f.PrevRows = f.Rows
+	f.Rows, err = f.openRead()
+	if err != nil {
+		return err
+	}
+	return nil
 }
 
-// OpenRead はflistファイルを読み込みProperty情報を返却する
-func (f *TmpFile) OpenRead() ([]Row, error) {
+// openRead opens this temporary file and returns the read Rows.
+func (f *TmpFile) openRead() ([]Row, error) {
 	var props []Row
 
 	file, err := os.Open(f.OutPath)
@@ -98,24 +112,36 @@ func (f *TmpFile) OpenRead() ([]Row, error) {
 	}
 	defer file.Close()
 
-	b, err := ioutil.ReadAll(file)
-	if err != nil {
-		return props, err
-	}
-
-	rows := strings.Split(string(b), getNewLineCode())
-
-	for _, r := range rows {
+	scanner := bufio.NewScanner(file)
+	for scanner.Scan() {
+		row := scanner.Text()
 		props = append(props, Row{
-			Path: filepath.Join(f.Dir, r),
-			Name: r,
+			Path: filepath.Join(f.TargetDir, row),
+			Name: row,
 		})
 	}
 
 	return props, nil
 }
 
-// Remove flistファイルを削除する
+// Remove the this temporary file.
 func (f *TmpFile) Remove() error {
 	return os.Remove(f.OutPath)
+}
+
+// Diff returns difference the previous rows and current rows
+func (f *TmpFile) Diff() ([]RowDiff, error) {
+	var diffs []RowDiff
+	if len(f.PrevRows) != len(f.Rows) {
+		return diffs, fmt.Errorf("f.PrevRows and f.Rows are must same length. f.PrevRows length is %d f.Rows length is %d", len(f.PrevRows), len(f.Rows))
+	}
+	for i := range f.PrevRows {
+		if f.PrevRows[i].Name != f.Rows[i].Name {
+			diffs = append(diffs, RowDiff{
+				PrevRow: f.PrevRows[i],
+				CurRow:  f.Rows[i],
+			})
+		}
+	}
+	return diffs, nil
 }

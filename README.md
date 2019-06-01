@@ -1,6 +1,6 @@
 # fedit
 
-fedit renames the files📝 in the specified directory📁. 
+fedit renames the files統 in the specified directory刀. 
 And you can edit with favorite editor, for example vim, emacs, notepad and gedit.
 
 If you takes time with rename tasks, recommend this.

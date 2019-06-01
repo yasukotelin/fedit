@@ -17,7 +17,13 @@ var (
 		Use:   "fedit",
 		Short: "rename all files in derectory.",
 		Long:  "fedit is the tool to rename all files in directory",
-		Run:   run,
+		Run: func(cmd *cobra.Command, args []string) {
+			if err := run(args); err != nil {
+				fmt.Printf("Error: %s\n", err)
+				os.Exit(ExitCodeError)
+			}
+			os.Exit(ExitCodeError)
+		},
 	}
 )
 
@@ -26,83 +32,85 @@ func init() {
 	rootCmd.PersistentFlags().StringVarP(&specifiedEditor, "editor", "e", editor.GetDefaultEditor(), "specify the editor to open. ")
 }
 
-func exitError(e error) {
-	fmt.Println(e)
-	os.Exit(1)
-}
-
-func exitErrorS(s string) {
-	fmt.Println(s)
-	os.Exit(1)
-}
-
-func run(cmd *cobra.Command, args []string) {
-	dirPath := getDirPath(args)
-
-	flFile, err := file.NewTmpFile(tmpFileName, dirPath)
+// run does the following flow.
+//
+// 1. create the temp file of file list.
+// 2. open it with the specified editor and user can edit it.
+// 3. read the edited it and get edited file name list.
+// 4. do rename them.
+// 5. delete the temp file.
+func run(args []string) error {
+	dirPath, err := getDirPath(args)
 	if err != nil {
-		exitError(err)
+		return err
 	}
-
-	// tmpファイル作成
-	f1, err := flFile.Create()
+	tmpFile, err := file.NewTmpFile(tmpFileName, dirPath)
 	if err != nil {
-		exitError(err)
+		return err
 	}
 
-	// エディタでtmpファイルを開く
-	if err := flFile.OpenWithEditor(specifiedEditor); err != nil {
-		exitError(err)
+	if err = tmpFile.Create(); err != nil {
+		return err
+	}
+	defer tmpFile.Remove()
+
+	if err := tmpFile.OpenWithEditor(specifiedEditor); err != nil {
+		return err
 	}
 
-	// 編集後のtmpファイルを開いて読み込む
-	f2, err := flFile.OpenRead()
+	// if isDeleted(rows, editedRows) {
+	// 	exitErrorS("Deleted file row error")
+	// }
+	// if isAdded(rows, editedRows) {
+	// 	exitErrorS("Added new file row error")
+	// }
+
+	// if file.IsDupl(editedRows) {
+	// 	exitError(errors.New("Duplicate file path specified"))
+	// }
+
+	diffs, err := tmpFile.Diff()
 	if err != nil {
-		exitError(err)
+		return err
 	}
 
-	// リネーム名に重複がないかのチェック
-	if file.IsDupl(&f2) {
-		exitError(errors.New("Duplicate file path specified"))
-	}
-
-	// 差分取得
-	diffs := file.Diff(f1, f2)
-
-	if len(diffs) > 0 {
-		// 差分表示
-		fmt.Println()
-		for _, d := range diffs {
-			fmt.Printf("%s ---> %s\n", d.File1.Path, d.File2.Path)
-		}
-		fmt.Println()
-
-		// 確定確認
-		r, err := askToApplyRename()
-		if err != nil {
-			exitError(err)
-		}
-		if r {
-			// Rename処理
-			for _, d := range diffs {
-				if err := os.Rename(d.File1.Path, d.File2.Path); err != nil {
-					exitError(err)
-				}
-			}
+	switch {
+	case len(diffs) == 0:
+		return errors.New("no changed the file name")
+	case len(diffs) > 0:
+		if err = doRenameWithConfirm(diffs); err != nil {
+			return err
 		}
 	}
 
-	// tmpファイル削除
-	if err := flFile.Remove(); err != nil {
-		exitError(err)
+	if err := tmpFile.Remove(); err != nil {
+		return err
 	}
+
+	return nil
 }
 
-func getDirPath(args []string) string {
+func getDirPath(args []string) (string, error) {
 	if len(args) == 0 {
-		exitErrorS("directry path required")
+		return "", errors.New("directry path required")
 	}
-	return args[0]
+	return args[0], nil
+}
+
+func isDeleted(org []file.Row, row []file.Row) bool {
+	return len(org) > len(row)
+}
+
+func isAdded(org []file.Row, row []file.Row) bool {
+	return len(org) < len(row)
+}
+
+func printDiff(diffs []file.RowDiff) {
+	fmt.Println()
+	for _, d := range diffs {
+		fmt.Printf("%s ---> %s\n", d.PrevRow.Path, d.CurRow.Path)
+	}
+	fmt.Println()
 }
 
 func askToApplyRename() (bool, error) {
@@ -120,4 +128,29 @@ func askToApplyRename() (bool, error) {
 			return false, nil
 		}
 	}
+}
+
+func doRenameWithConfirm(diffs []file.RowDiff) error {
+	printDiff(diffs)
+
+	ok, err := askToApplyRename()
+	if err != nil {
+		return err
+	}
+	if ok {
+		err = rename(diffs)
+		if err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func rename(diffs []file.RowDiff) error {
+	for _, d := range diffs {
+		if err := os.Rename(d.PrevRow.Path, d.CurRow.Path); err != nil {
+			return err
+		}
+	}
+	return nil
 }

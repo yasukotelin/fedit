@@ -58,6 +58,7 @@ $RECYCLE.BIN/
 
 # fedit
 flit.txt
+files.tmp
 
 # End of https://www.gitignore.io/api/go,windows,visualstudiocode
 

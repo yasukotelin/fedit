@@ -7,9 +7,9 @@ type Row struct {
 }
 
 // IsDupl returns whether the rows are duplicated.
-func IsDupl(rows *[]Row) bool {
+func IsDupl(rows []Row) bool {
 	m := make(map[string]bool)
-	for _, row := range *rows {
+	for _, row := range rows {
 		if m[row.Path] {
 			return true
 		}
