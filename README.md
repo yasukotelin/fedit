@@ -1,9 +1,9 @@
 # fedit
 
-fedit renames the files統 in the specified directory刀. 
+fedit renames the files📝 in the specified directory🗂. </br>
 And you can edit with favorite editor, for example vim, emacs, notepad and gedit.
 
-If you takes time with rename tasks, recommend this.
+If you have to need to rename a much files, recommend to use this😋.
 
 <p align="center">
     <img src="./image/fedit-sample.gif" width="auto">
@@ -11,16 +11,20 @@ If you takes time with rename tasks, recommend this.
 
 ## Install
 
-> **NOTE** You must have already installed Go.
+### Using go
 
 ```
 go get github.com/yasukotelin/fedit
 ```
 
+### for Winsows
+
+If you are windows user, you can just only [download]() and use easily.
+
 ## How to use
 
 ```
-> fedit ./
+fedit ./
 ```
 
 When you run `fedit` with specifying the directory, the file list is opened by **Default editor**.
@@ -38,5 +42,5 @@ fedit -e gvim ./
 ### Help
 
 ```
-> fedit --help
+fedit --help
 ```

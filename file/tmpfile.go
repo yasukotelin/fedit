@@ -75,6 +75,10 @@ func (f TmpFile) readRows() ([]Row, error) {
 	index := 0
 	for _, file := range files {
 		if !file.IsDir() {
+			if file.Name() == f.Name {
+				// ignore myself
+				continue
+			}
 			row := Row{
 				Path: filepath.Join(f.TargetDir, file.Name()),
 				Name: file.Name(),
