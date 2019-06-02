@@ -2,6 +2,7 @@ package file
 
 import (
 	"bufio"
+	"errors"
 	"fmt"
 	"io/ioutil"
 	"os"
@@ -99,6 +100,9 @@ func (f *TmpFile) OpenWithEditor(editor string) error {
 	if err != nil {
 		return err
 	}
+	if IsDupl(f.Rows) {
+		return errors.New("theare are duplicated rows")
+	}
 	return nil
 }
 
@@ -127,6 +131,16 @@ func (f *TmpFile) openRead() ([]Row, error) {
 // Remove the this temporary file.
 func (f *TmpFile) Remove() error {
 	return os.Remove(f.OutPath)
+}
+
+// IsDeletedRows returns whether rows are deleted by edited.
+func (f *TmpFile) IsDeletedRows() bool {
+	return len(f.PrevRows) > len(f.Rows)
+}
+
+// IsAddedRows returns whether rows are added by edited.
+func (f *TmpFile) IsAddedRows() bool {
+	return len(f.PrevRows) < len(f.Rows)
 }
 
 // Diff returns difference the previous rows and current rows

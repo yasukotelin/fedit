@@ -58,16 +58,13 @@ func run(args []string) error {
 		return err
 	}
 
-	// if isDeleted(rows, editedRows) {
-	// 	exitErrorS("Deleted file row error")
-	// }
-	// if isAdded(rows, editedRows) {
-	// 	exitErrorS("Added new file row error")
-	// }
+	if tmpFile.IsDeletedRows() {
+		return errors.New("Deleted rows error")
+	}
 
-	// if file.IsDupl(editedRows) {
-	// 	exitError(errors.New("Duplicate file path specified"))
-	// }
+	if tmpFile.IsAddedRows() {
+		return errors.New("Added new rows error")
+	}
 
 	diffs, err := tmpFile.Diff()
 	if err != nil {
@@ -95,14 +92,6 @@ func getDirPath(args []string) (string, error) {
 		return "", errors.New("directry path required")
 	}
 	return args[0], nil
-}
-
-func isDeleted(org []file.Row, row []file.Row) bool {
-	return len(org) > len(row)
-}
-
-func isAdded(org []file.Row, row []file.Row) bool {
-	return len(org) < len(row)
 }
 
 func printDiff(diffs []file.RowDiff) {

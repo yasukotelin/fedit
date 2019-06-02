@@ -6,7 +6,7 @@ type Row struct {
 	Name string
 }
 
-// IsDupl returns whether the rows are duplicated.
+// IsDupl returns whether the rows have duplicated.
 func IsDupl(rows []Row) bool {
 	m := make(map[string]bool)
 	for _, row := range rows {
