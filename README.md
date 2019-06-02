@@ -19,7 +19,7 @@ go get github.com/yasukotelin/fedit
 
 ### for Winsows
 
-If you are windows user, you can just only [download]() and use easily.
+If you are windows user, you can just only [download](https://github.com/yasukotelin/fedit/releases) and use easily.
 
 ## How to use
 
